@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <!-- 引入Vue -->
+    <script src="../../js/vue.min.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../../css/iview.min.css">
+    <!-- 引入组件库 -->
+    <script src="../../js/iview.js"></script>
+    <style>
+        nav {
+            padding: 10px 50px;
+            display: flex;
+            justify-content: flex-end;
+            justify-items: center;
+        }
+
+        nav div:first-child button {
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="app" ref="head" style="display: none" >
+    <nav v-if="userType!=3">
+        <div>
+            <i-Input placeholder="请输入公司名..." style="width: 300px" v-model="searchText"></i-Input>
+            <i-Button type="primary" shape="circle" icon="ios-search" @click="search"></i-Button>
+        </div>
+    </nav>
+    <Row style="background:#eee;padding:20px;height: 100vh;">
+        <Card :bordered="false" v-for="obj in card" style="margin: 20px 0">
+            <p slot="title">{{obj.title}}</p>
+            <Row v-for="objA in obj.content" style="margin: 10px 0">
+                <i-Col span="10" v-for="objB in objA">
+                    <Row type="flex" justify="start">
+                        <i-Col offset="1">
+                            <Icon type="ios-analytics"></Icon>
+                            {{objB.title}}(<span style="color: #ed3f14;">{{objB.number}}</span>)
+                        </i-Col>
+                        <i-Col offset="1">
+                            <span style="color: #ed3f14;cursor: pointer">查看</span>
+                        </i-Col>
+                    </Row>
+                </i-Col>
+            </Row>
+        </Card>
+    </Row>
+</div>
+<script src="../../js/jquery-2.1.0.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="../../config/js.cookie.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data:function() {
+            return {
+                searchText: '',
+                card: [
+                    {
+                        title: '企业相关证件过期提示',
+                        content: [
+                            [
+                                {
+                                    title: '营业执照',
+                                    number: 0
+                                },
+                                {
+                                    title: '经营许可证',
+                                    number: 0
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        title: '车辆相关证件过期提示',
+                        content: [
+                            [
+                                {
+                                    title: '强制保险',
+                                    number: 0
+                                },
+                                {
+                                    title: '第三责任险',
+                                    number: 0
+                                }
+                            ],
+                            [
+                                {
+                                    title: '承运人责任险',
+                                    number: 0
+                                },
+                                {
+                                    title: '车辆行驶证年审',
+                                    number: 0
+                                }
+                            ],
+                            [
+                                {
+                                    title: '道路运输证年审',
+                                    number: 0
+                                },
+                                {
+                                    title: '罐体年检',
+                                    number: 0
+                                }
+                            ],
+                            [
+                                {
+                                    title: '技术等级评定',
+                                    number: 0
+                                },
+                                {
+                                    title: '二级维护',
+                                    number: 0
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        title: '员工相关证件过期提示',
+                        content: [
+                            [
+                                {
+                                    title: '驾驶证',
+                                    number: 0
+                                },
+                                {
+                                    title: '驾驶员资格证',
+                                    number: 0
+                                }
+                            ],
+                            [
+                                {
+                                    title: '押运从业资格证',
+                                    number: 0
+                                },
+                                {
+                                    title: '安管员资格从业证',
+                                    number: 0
+                                }
+                            ],
+                            [
+                                {
+                                    title: '主要负责人从业资格证',
+                                    number: 0
+                                },
+                                {
+                                    title: '装卸管理从业资格证',
+                                    number: 0
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        },
+        mounted: function () {
+            this.$refs.head.style.display = 'block';
+        },
+        methods: {
+            search:function() {
+                if (this.searchText.replace(/\s/g, '').length < 1) {
+                    alert('搜索内容不可为空');
+                } else {
+                    alert('正在搜索！！！');
+                }
+            }
+        },
+        created:function(){
+            var _self = this;
+            var textState = JSON.parse(Cookies.get("state"));
+            if (textState != null) {
+                if (textState.ID == 0) {
+                    window.location.href = "../../state.html";
+                } else if (textState.ID == 1) {
+                    if (textState.roleID == 1) {
+                        _self.userType = 1;
+                    } else if (textState.roleID == 2) {
+                        _self.userType = 2;
+                    } else {
+                        _self.userType = 3;
+                    }
+                    /*_self.getData();*/
+                }
+            } else {
+                window.location.href = "../../state.html";
+            }
+        }
+    });
+</script>
+</body>
+</html>

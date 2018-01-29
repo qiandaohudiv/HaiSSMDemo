@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <link rel="stylesheet" type="text/css" href="../../css/view/businessInfo.css"/>
+    <link rel="stylesheet" type="text/css" href="../../css/iview.min.css" charset="utf-8"/>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=KRExwo0Mp2zrRwpvLh5SWi9t4mOadCM2"></script>
+</head>
+<style type="text/css">
+    .ivu-form-item-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .ivu-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .ivu-modal {
+        top: 0px;
+        margin: 50px auto;
+    }
+    .ivu-notice{
+    	position: absolute;   
+            top: 25% !important;   
+            left: 45% !important;   
+            -webkit-transform: translate(-50%, -50%);   
+            -moz-transform: translate(-50%, -50%);   
+            -ms-transform: translate(-50%, -50%);   
+            -o-transform: translate(-50%, -50%);   
+            transform: translate(-50%, -50%);  
+    }
+</style>
+<body>
+<!--总区块-->
+<div id="app" ref="head" style="display: none">
+    <!--頭部區塊-->
+    <nav>
+        <div>
+            <i-button type="primary" @click="open($event)" v-if="userType===3">添加</i-button>
+            <i-button type="primary" style="margin-left: 20px;" @click="moreDelete" v-if="userType===1">删除</i-button>
+        </div>
+        <div>
+            <i-input placeholder="请输入车牌号" style="width: 200px;" v-model="searchText"></i-input>
+            <i-button type="primary" shape="circle" icon="ios-search" @click="search"></i-button>
+        </div>
+    </nav>
+    <!--数据区块-->
+    <i-Table border :columns="columns" :data="data1" @on-selection-change="chooseAll" ellipsis></i-Table>
+    <!--\总页数-->
+    <Page :total="totalRecord" @on-change="changePage" :current="page.current" 
+          :page-size="page.pageNum" show-total show-elevator></Page>
+    <Modal
+            v-model="model1"
+            width="65%"
+            :closable="false"
+            :scrollable="true"
+    >
+        <i-form :model="formValidate" :rules="ruleValidate" ref="formValidate">
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="车牌号" prop="carNum">
+                        <i-Input placeholder="请输入" v-model="formValidate.carNum" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="车牌颜色" prop="carnumColor">
+                        <Radio-Group v-model="formValidate.carnumColor">
+                            <Radio label="黄色" v-bind:disabled="openState==='查看'">黄色</Radio>
+                            <Radio label="绿色" v-bind:disabled="openState==='查看'">绿色</Radio>
+                        </Radio-Group>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="挂车牌号">
+                        <i-Input placeholder="请输入挂车牌号" v-model="formValidate.guacarNum" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="车辆颜色">
+                        <Radio-Group v-model="formValidate.carColor">
+                            <Radio label="黄色" v-bind:disabled="openState==='查看'">黄色</Radio>
+                            <Radio label="绿色" v-bind:disabled="openState==='查看'">绿色</Radio>
+                        </Radio-Group>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="车辆类型">
+                        <i-Select placeholder="请选择" v-model="formValidate.carType" v-bind:disabled="openState==='查看'">
+                            <i-Option v-for="item in carType" :value="item">{{item}}</i-Option>
+                        </i-Select>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="车辆长，宽，高(MM)">
+                        <Row>
+                            <i-Col span="6">
+                                <i-Input placeholder="长" v-model="formValidate.len" v-bind:disabled="openState==='查看'"></i-Input>
+                            </i-Col>
+                            <i-col span="3"></i-col>
+                            <i-Col span="6">
+                                <i-Input placeholder="宽" v-model="formValidate.width" v-bind:disabled="openState==='查看'"></i-Input>
+                            </i-Col>
+                            <i-col span="3"></i-col>
+                            <i-Col span="6">
+                                <i-Input placeholder="高" v-model="formValidate.high" v-bind:disabled="openState==='查看'"></i-Input>
+                            </i-Col>
+                        </Row>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Row>
+                        <i-Col span="11">
+                            <Form-Item label="核定载重(kg)" prop="allowWeight">
+                                <i-input placeholder="核定载重" v-model="formValidate.allowWeight" v-bind:disabled="openState==='查看'"></i-input>
+                            </Form-Item>
+                        </i-Col>
+                        <i-col span="2"></i-col>
+                        <i-Col span="11">
+                            <Form-Item label="整备质量(kg)" prop="weigh">
+                                <i-input placeholder="整备质量" v-model="formValidate.weigh" v-bind:disabled="openState==='查看'"></i-input>
+                            </Form-Item>
+                        </i-Col>
+                    </Row>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="准牵引总质量或挂车总质量(Kg)" prop="totalWei">
+                        <i-input placeholder="准牵引总质量或挂车总质量" v-model="formValidate.totalWei" v-bind:disabled="openState==='查看'"></i-input>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="企业名称" prop="companyName">
+                        <i-input placeholder="企业名称" v-model="formValidate.companyName" disabled></i-input>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="持有类型">
+                        <i-Select placeholder="请选择" v-model="formValidate.ownType" v-bind:disabled="openState==='查看'">
+                            <i-Option value="私有">私有</i-Option>
+                            <i-Option value="挂靠">挂靠</i-Option>
+                            <i-Option value="社会">社会</i-Option>
+                        </i-Select>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="道路运输证号码" prop="cerNum">
+                        <i-Input placeholder="请输入道路运输证号码" v-model="formValidate.cerNum" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="经营范围" prop="scope">
+                        <i-Input placeholder="请输入经营范围" v-model="formValidate.scope" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="交强险有效期">
+                        <Date-Picker type="date" placeholder="选择日期" style="width: 100%"
+                                     v-model="formValidate.insuranceDate" v-bind:disabled="openState==='查看'"></Date-Picker>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="第三方责任有效期">
+                        <Date-Picker type="date" placeholder="选择日期" style="width: 100%"
+                                     v-model="formValidate.dutyInsurancedate" v-bind:disabled="openState==='查看'"></Date-Picker>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="承运人责任险有效期">
+                        <Date-Picker type="date" placeholder="选择日期" style="width: 100%"
+                                     v-model="formValidate.dutypeoDate" v-bind:disabled="openState==='查看'"></Date-Picker>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="卫星定位系统运营商">
+                        <i-input placeholder="运营商" v-model="formValidate.satellite" v-bind:disabled="openState==='查看'"></i-input>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Row>
+                        <i-Col span="11">
+                            <Form-Item label="道路运输证年审有效期">
+                                <Date-Picker type="date" placeholder="选择日期" v-model="formValidate.roadDate"
+                                             style="width: 100%" v-bind:disabled="openState==='查看'"></Date-Picker>
+                            </Form-Item>
+                        </i-Col>
+                        <i-col span="2"></i-col>
+                        <i-Col span="11">
+                            <Form-Item label="证件有效期">
+                                <Date-Picker type="date" placeholder="选择日期" v-model="formValidate.certDate"
+                                             style="width: 100%" v-bind:disabled="openState==='查看'"></Date-Picker>
+                            </Form-Item>
+                        </i-Col>
+                    </Row>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Row>
+                        <i-Col span="11">
+                            <Form-Item label="行驶证年审有效期">
+                                <Date-Picker type="date" placeholder="选择日期" v-model="formValidate.certyearDate"
+                                             style="width: 100%" v-bind:disabled="openState==='查看'"></Date-Picker>
+                            </Form-Item>
+                        </i-Col>
+                        <i-col span="2"></i-col>
+                        <i-Col span="11">
+                            <Form-Item label="证件有效期">
+                                <Date-Picker type="date" placeholder="选择日期" v-model="formValidate.certagrDate"
+                                             style="width: 100%" v-bind:disabled="openState==='查看'"></Date-Picker>
+                            </Form-Item>
+                        </i-Col>
+                    </Row>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="罐体年检有效期">
+                        <Date-Picker type="date" placeholder="选择日期" style="width: 100%"
+                                     v-model="formValidate.yearcheckDate" v-bind:disabled="openState==='查看'"></Date-Picker>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Row>
+                        <i-Col span="11">
+                            <Form-Item label="罐体容量m3">
+                                <i-input palaceholder="罐体容量" v-model="formValidate.volume" v-bind:disabled="openState==='查看'"></i-input>
+                            </Form-Item>
+                        </i-Col>
+                        <i-Col span="11">
+                            <Form-Item label="罐体材质">
+                                <i-input palaceholder="罐体材质" v-model="formValidate.quality" v-bind:disabled="openState==='查看'"></i-input>
+                            </Form-Item>
+                        </i-Col>
+                    </Row>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="技术等级评定有效期">
+                        <Date-Picker type="date" placeholder="选择日期" style="width: 100%"
+                                     v-model="formValidate.tecDate" v-bind:disabled="openState==='查看'"></Date-Picker>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="二级维护有效期">
+                        <Date-Picker type="date" placeholder="选择日期" style="width: 100%"
+                                     v-model="formValidate.secImprovedate" v-bind:disabled="openState==='查看'"></Date-Picker>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <row>
+                <i-Col span="11">
+                    <Form-Item label="驾驶员" prop="driverName">
+                        <select placeholder="驾驶员" style="display: inline-block; width: 100%;height: 30px;"
+                                @change="theDriver" v-model="dp" v-bind:disabled="openState==='查看'">
+                            <option v-for="(item,index) in driverList" :value="index">{{item.name}}</option>
+                        </select>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="押运员" prop="safer">
+                        <select placeholder="押运员" style="display: inline-block; width: 100%;height: 30px;"
+                                @change="theSafer" v-model="sp" v-bind:disabled="openState==='查看'">
+                            <option v-for="(item,index) in safeList" :value="index">{{item.name}}</option>
+                        </select>
+                    </Form-Item>
+                </i-Col>
+            </row>
+            <br>
+            <row>
+                <i-Col span="11">
+                    <Row>
+                        <i-Col span="11">
+                            <Form-Item label="驾驶证号">
+                                <i-input placeholder="驾驶证号" disabled v-model="driver.driveLicence"></i-input>
+                            </Form-Item>
+                        </i-Col>
+                        <i-col span="2"></i-col>
+                        <i-Col span="11">
+                            <Form-Item label="联系电话">
+                                <i-input placeholder="联系电话" disabled v-model="driver.phone"></i-input>
+                            </Form-Item>
+                        </i-Col>
+                    </Row>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Row>
+                        <i-Col span="11">
+                            <Form-Item label="从业资格证号">
+                                <i-input placeholder="驾驶证号" disabled v-model="safer.drivezigezheng"></i-input>
+                            </Form-Item>
+                        </i-Col>
+                        <i-col span="2"></i-col>
+                        <i-Col span="11">
+                            <Form-Item label="联系电话">
+                                <i-input placeholder="联系电话" disabled v-model="safer.phone"></i-input>
+                            </Form-Item>
+                        </i-Col>
+                    </Row>
+                </i-Col>
+            </row>
+        </i-form>
+        <div slot="footer">
+            <i-button type="text" style="width: 100px;" @click="cancel">取消</i-button>
+            <i-button type="primary" @click="upCarMessage" :loading="loading" style="width: 100px;">确定</i-button>
+        </div>
+    </Modal>
+    <Modal
+            v-model="model2"
+            width="65%"
+    >
+    	<p slot="header">
+        </p>
+        <div id="allmap" style="width: 100%;height: 500px;"></div>
+        <div slot="footer">
+        </div>
+    </Modal>
+</div>
+</body>
+<script src="../../js/jquery-2.1.0.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="../../js/vue.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="../../js/iview.js"></script>
+<script src="../../config/config.js"></script>
+<script src="../../config/js.cookie.js"></script>
+<script src="../../js/view/carInfo.js"></script>
+</html>

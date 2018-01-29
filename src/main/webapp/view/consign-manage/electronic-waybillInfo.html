@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <!-- 引入Vue -->
+    <script src="../../js/vue.min.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../../css/iview.min.css">
+    <!-- 引入组件库 -->
+    <script src="../../js/iview.js"></script>
+    <style type="text/css">
+        nav {
+            padding: 10px 50px;
+            display: flex;
+            justify-content: space-between;
+            justify-items: center;
+        }
+
+        nav div:first-child button {
+            margin: 0 10px;
+        }
+
+
+        .ivu-form-item-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ivu-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ivu-modal {
+            top: 0px;
+            margin: 50px auto;
+        }
+
+    </style>
+</head>
+<body>
+<div id="app" ref="head" style="display: none">
+    <nav>
+        <div>
+            <i-Button type="primary" @click="open($event)" v-if="userType===3">添加</i-Button>
+            <i-Button type="primary" @click="del" v-if="userType===1">删除</i-Button>
+        </div>
+        <div>
+            <i-Input placeholder="请输入托运方..." style="width: 300px" v-model="searchText"></i-Input>
+            <i-Button type="primary" shape="circle" icon="ios-search" @click="search"></i-Button>
+        </div>
+    </nav>
+    <i-Table border :columns="columns" :data="data" @on-selection-change="chooseAll"></i-Table>
+    <Page :total="totalRecord"  show-total
+          show-elevator :current="page.current" @on-change="next" :page-size="page.pageNum"></Page>
+    <Modal
+            width="60%"
+            v-model="modal1"
+            :closable="false">
+        <i-form ref="formValidate" :model="formValidate" :rules="ruleValidate">
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="托运方" prop="shipper">
+                        <i-Input placeholder="请输入托运方" v-model="formValidate.shipper" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="装货时间">
+                        <Date-Picker type="date" placeholder="选择日期" style="width: 100%"
+                                     v-model="formValidate.consignDate" v-bind:disabled="openState==='查看'"></Date-Picker>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="装货时间">
+                        <Date-Picker type="date" placeholder="选择日期" style="width: 100%"
+                                     v-model="formValidate.loadingDate" v-bind:disabled="openState==='查看'"></Date-Picker>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="卸货时间">
+                        <Date-Picker type="date" placeholder="选择日期" style="width: 100%"
+                                     v-model="formValidate.uploadDate" v-bind:disabled="openState==='查看'"></Date-Picker>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <!--发货基本信息-->
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="发货点">
+                        <i-Input placeholder="请输入发货点" v-model="formValidate.sendPlace" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="发货省市">
+                        <Cascader :data="cityData" v-model="theSendCity" style="width: 100%" ></Cascader>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="6">
+                    <form-Item label="装货地点">
+                        <i-Input placeholder="请输入装货地点" v-model="formValidate.loadPlace" v-bind:disabled="openState==='查看'"></i-Input>
+                    </form-Item>
+                </i-Col>
+                <i-col span="3"></i-col>
+                <i-Col span="6">
+                    <form-Item label="联系人">
+                        <i-Input placeholder="请输入联系人" v-model="formValidate.loadLinkman" v-bind:disabled="openState==='查看'"></i-Input>
+                    </form-Item>
+                </i-Col>
+                <i-col span="3"></i-col>
+                <i-Col span="6">
+                    <form-Item label="电话">
+                        <i-Input placeholder="请输入联系人电话" v-model="formValidate.loadLinkmanPhone" v-bind:disabled="openState==='查看'"></i-Input>
+                    </form-Item>
+                </i-Col>
+            </Row>
+            <!--收货基本信息-->
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="收货点">
+                        <i-Input placeholder="请输入收货点" v-model="formValidate.receivePlace" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="收货省市">
+                        <Cascader :data="cityData" v-model="theReceiveCity" style="width: 100%" v-bind:disabled="openState==='查看'"></Cascader>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="6">
+                    <form-Item label="收货地点">
+                        <i-Input placeholder="请输入收货地点" v-model="formValidate.uploadAdress" v-bind:disabled="openState==='查看'"></i-Input>
+                    </form-Item>
+                </i-Col>
+                <i-col span="3"></i-col>
+                <i-Col span="6">
+                    <form-Item label="联系人">
+                        <i-Input placeholder="请输入联系人" v-model="formValidate.uploadLinkman" v-bind:disabled="openState==='查看'"></i-Input>
+                    </form-Item>
+                </i-Col>
+                <i-col span="3"></i-col>
+                <i-Col span="6">
+                    <form-Item label="电话">
+                        <i-Input placeholder="请输入联系人电话" v-model="formValidate.uploadLinkmanPhone" v-bind:disabled="openState==='查看'"></i-Input>
+                    </form-Item>
+                </i-Col>
+            </Row>
+            <!--货物信息-->
+            <Row>
+                <i-Col span="11">
+                    <form-Item label="货物名称">
+                        <i-select  placeholder="请选择" @on-change="goodsChange"
+                                v-model="goodsPosition" v-bind:disabled="openState==='查看'">
+                            <i-option v-for="(item,index) in goodsList" :value="index">{{item.name}}</i-option>
+                        </i-select>
+                    </form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="编号">
+                        <i-input v-model="formValidate.nationCode" disabled></i-input>
+                    </Form-Item>
+                </i-Col>
+
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="货物类型">
+                        <i-input v-model="formValidate.code" disabled></i-input>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <Form-Item label="件数">
+                        <i-input v-model="formValidate.total" v-bind:disabled="openState==='查看'"></i-input>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="6">
+                    <Form-Item label="重量">
+                        <i-input v-model="formValidate.weight" v-bind:disabled="openState==='查看'"></i-input>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="3"></i-col>
+                <i-Col span="6">
+                    <Form-Item label="体积">
+                        <i-input v-model="formValidate.volume" v-bind:disabled="openState==='查看'"></i-input>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="3"></i-col>
+                <i-Col span="6">
+                    <Form-Item label="运费">
+                        <i-input v-model="formValidate.freight" v-bind:disabled="openState==='查看'"></i-input>
+                    </Form-Item>
+                </i-Col>
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <Form-Item label="车牌">
+                        <i-select placeholder="选择车辆"
+                                v-model="carPosition" @on-change="carChange" v-bind:disabled="openState==='查看'">
+                            <i-option v-for="(item,index) in carList" :value="index">{{item.carNum}}</i-option>
+                        </i-select>
+                    </Form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <form-Item label="挂车车牌">
+                        <i-input disabled v-model="carMessage.guacarNum" ></i-input>
+                    </form-Item>
+                </i-Col>
+
+            </Row>
+            <Row>
+                <i-Col span="11">
+                    <form-Item label="车辆类型">
+                        <i-input disabled v-model="carMessage.carType"></i-input>
+                    </form-Item>
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    <form-Item label="载质量(kg)">
+                        <i-input disabled v-model="carMessage.allowWeight"></i-input>
+                    </form-Item>
+                </i-Col>
+            </Row>
+            <!---->
+            <Row style="border-bottom: 1px dashed #EEEEEE;padding-bottom: 10px;">
+                <i-Col span="11">
+                    驾驶员
+                </i-Col>
+                <i-col span="2"></i-col>
+                <i-Col span="11">
+                    押运员
+                </i-Col>
+            </Row>
+            <!--驾驶员和押运员-->
+            <Row style="padding-top: 10px">
+                <!--驾驶员-->
+                <i-Col span="12" >
+                    <i-Col span="12">
+                        <Row>
+                            <form-Item label="姓名">
+                                <i-input disabled v-model="carMessage.driverName"></i-input>
+                            </form-Item>
+                        </Row>
+                        <Row>
+                            <form-Item label="驾驶证">
+                                <i-input disabled v-model="carMessage.driveLicence"></i-input>
+                            </form-Item>
+                        </Row>
+                        <Row>
+                            <form-Item label="资格证">
+                                <i-input disabled v-model="carMessage.drivezigezheng"></i-input>
+                            </form-Item>
+                        </Row>
+                        <Row>
+                            <form-Item label="电话">
+                                <i-input disabled v-model="carMessage.driverPhone"></i-input>
+                            </form-Item>
+                        </Row>
+                        <Row>
+                            <form-Item label="身份证">
+                                <i-input disabled></i-input>
+                            </form-Item>
+                        </Row>
+                    </i-Col>
+                    <i-Col span="12" style="display: flex;justify-content: center;align-items: center">
+                        <img :src="carMessage.driverPictureUrl" style="width: 200px;height:230px;min-width: 100px;min-height: 130px"/>
+                    </i-Col>
+                </i-Col>
+                <!--押运员-->
+                <i-Col span="12">
+                    <i-Col span="12">
+                        <Row>
+                            <form-Item label="姓名">
+                                <i-input disabled v-model="carMessage.safer"></i-input>
+                            </form-Item>
+                        </Row>
+                        <Row>
+                            <form-Item label="资格证">
+                                <i-input disabled v-model="carMessage.saferzigezheng"></i-input>
+                            </form-Item>
+                        </Row>
+                        <Row>
+                            <form-Item label="电话">
+                                <i-input disabled v-model="carMessage.saferPhone"></i-input>
+                            </form-Item>
+                        </Row>
+                        <Row>
+                            <form-Item label="驾驶证">
+                                <i-input disabled></i-input>
+                            </form-Item>
+                        </Row>
+                        <Row>
+                            <form-Item label="身份证">
+                                <i-input disabled></i-input>
+                            </form-Item>
+                        </Row>
+                    </i-Col>
+                    <i-Col span="12" style="display: flex;justify-content: center;align-items: center">
+                        <img :src="carMessage.saferPictureUrl" style="width: 200px;height:230px;min-width: 100px;min-height: 130px"/>
+                    </i-Col>
+                </i-Col>
+            </Row>
+        </i-form>
+        <!--自定义-->
+        <div slot="footer" class="ivu-modal-footer1">
+            <i-button type="text" style="width: 100px;" @click="cancel">取消</i-button>
+            <i-button type="primary" @click="upMessage" :loading="loading" style="width: 100px;">确定</i-button>
+        </div>
+    </Modal>
+    <!--显示订单状态-->
+    <Modal
+            width="60%"
+            v-model="modal2"
+            :closable="false"
+            :styles="{top: '20px'}">
+        <div class="theMsgBox">
+            <div class="oneheadBox">订单状态</div>
+            <div style="height: 40px; line-height: 40px; text-align: center">
+                {{waybillMsg.waybillState}}
+            </div>
+            <div class="oneheadBox">行车日志</div>
+            <ul>
+                <li v-for="item in theDriverLog">
+                    <Icon type="checkmark-round" style="color: #2d8cf0"></Icon>
+                    {{item.name}}
+                </li>
+            </ul>
+            <div class="oneheadBox">车况检查</div>
+            <ul>
+                <li v-for="item in theCarChecked">
+                    <Icon type="checkmark-round" style="color: #2d8cf0"></Icon>
+                    {{item.name}}
+                </li>
+            </ul>
+        </div>
+
+    </Modal>
+</div>
+<script src="../../js/jquery-2.1.0.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="../../js/support/area.js"></script>
+<script src="../../config/config.js"></script>
+<script src="../../config/js.cookie.js"></script>
+<script src="../../js/view/waybillInfo.js"></script>
+</body>
+</html>

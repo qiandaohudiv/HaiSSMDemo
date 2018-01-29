@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <!-- 引入Vue -->
+    <script src="../../js/vue.min.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../../css/iview.min.css">
+    <!-- 引入组件库 -->
+    <script src="../../js/iview.js"></script>
+    <style>
+        nav {
+            padding: 10px 50px;
+            display: flex;
+            justify-content: space-between;
+            justify-items: center;
+        }
+
+        nav div:first-child button {
+            margin: 0 10px;
+        }
+
+        .ivu-form-item-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ivu-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ivu-modal {
+            height: 100%;
+            top: 0;
+            bottom: 0;
+        }
+
+        .ivu-modal-content {
+            border-radius: 0px;
+        }
+
+        .ivu-modal-body {
+            margin-bottom: 64px;
+        }
+
+        .ivu-modal-footer {
+            z-index: 9999;
+            background: #FFFFFF;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+        }
+    </style>
+</head>
+<body>
+<div id="app" ref="head" style="display: none">
+    <nav>
+        <div>
+            <i-Button type="primary" @click="del">删除</i-Button>
+        </div>
+        <div>
+            <i-Input placeholder="请输入报警人..." style="width: 300px"></i-Input>
+            <i-Button type="primary" shape="circle" icon="ios-search"></i-Button>
+        </div>
+    </nav>
+    <i-Table :columns="columns" :data="data" @on-selection-change="chooseAll"></i-Table>
+    <Page :total="totalPage"  show-total
+          show-elevator :current="page.current" @on-change="next"
+          :page-size="page.pageNum"></Page>
+
+</div>
+<script src="../../js/jquery-2.1.0.min.js" type="text/javascript" charset="utf-8"></script>
+<script>
+    var app;
+    app = new Vue({
+        el: "#app",
+        data:function() {
+            return {
+                totalPage: 0, /*总页数*/
+                page: {
+                    current: 1, /*当前页*/
+                    pageNum: 20/*每页数据量*/
+                },
+                columns: [
+                    {
+                        type: 'selection',
+                        align: 'center',
+                    },
+                    {
+                        title: '报警人ID',
+                        key: 'driverId',
+                    },
+                    {
+                        title: '报警时间',
+                        key: 'alarmTime',
+                        sortable: true
+                    },
+                    {
+                        title: '报警电话',
+                        key: 'alarmPhone',
+                    },
+                    {
+                        title: '报警地点',
+                        key: 'alarmPlace',
+                    },
+
+                    {
+                        title: '操作',
+                        key: 'action',
+                        width: 150,
+                        align: 'center',
+                        fixed: 'right',
+                        render: function (h, params) {
+                            return h('div', [
+                                h('Button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: function () {
+                                            this.show(params.index)
+                                        }.bind(this)
+                                    }
+                                }, '查看'),
+                                h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small'
+                                    },
+                                    on: {
+                                        click: function () {
+                                            this.delArr.push(this.data[params.index].id);
+                                            this.del();
+                                        }.bind(this)
+                                    }
+                                }, '删除')
+                            ]);
+                        }.bind(this)
+                    }
+                ],
+                data: [],
+            }
+        },
+        methods: {
+            del:function() {
+                var _self = this;
+                $.get('http://localhost:8080/HaiSSMDemo/delPeopleBatch.action?arrays=' + _self.delArr,
+                    function (data, status) {
+                        console.log(status);
+                        if (status == 'success') {
+                            _self.getData();
+                            _self.$Message.info('刪除成功');
+                        }
+                        else {
+                            _self.$Message.info('刪除失败');
+                        }
+                    }
+                );
+            },
+            chooseAll:function(data) {
+                var _self = this;
+                for (var i in data) {
+                    _self.delArr.push(data[i].id);
+                }
+            },
+            next:function(data) {
+                this.page.current = data;
+                this.getData();
+            },
+            getData:function() {
+                var _self = this;
+                _self.$Loading.start();
+                $.ajax({
+                    url: 'http://localhost:8080/HaiSSMDemo/allPeople.action',
+                    type: 'get',
+                    data: _self.page,
+                    success:function(data) {
+                        _self.$Loading.finish();
+                        _self.totalPage = data.totalPage;
+                        _self.page.current = data.currentPage;
+                        _self.page.pageNum = data.pageSize;
+                        for (var i in data.dataList) {
+                            data.dataList[i].birthday = _self.format(data.dataList[i].birthday);
+                            data.dataList[i].driLicenceTime = _self.format(data.dataList[i].driLicenceTime);
+                            data.dataList[i].driverzigezhengTime = _self.format(data.dataList[i].driverzigezhengTime);
+                        }
+
+                        _self.data = data.dataList;
+
+                    },
+                    error:function() {
+                        _self.$Loading.error();
+                    }
+                });
+            }
+        },
+        mounted: function () {
+            this.$refs.head.style.display = 'block';
+        },
+        created:function() {
+            //this.getData();
+        }
+    });
+</script>
+
+</body>
+</html>

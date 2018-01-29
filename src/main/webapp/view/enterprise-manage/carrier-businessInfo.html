@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <link rel="stylesheet" type="text/css" href="../../css/view/businessInfo.css"/>
+    <link rel="stylesheet" type="text/css" href="../../css/iview.min.css" charset="utf-8"/>
+</head>
+<style type="text/css">
+    .ivu-modal-content {
+        margin-top: 20px;
+    }
+
+    .ivu-form-item-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .ivu-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>
+<body>
+<!--总区块-->
+<div id="app" ref="head" style="display: none">
+    <!--頭部區塊-->
+    <nav>
+        <div>
+            <i-button type="primary" @click="open($event)" v-if="userType===1">添加</i-button>
+            <i-button type="primary" style="margin-left: 20px;" @click="moreDelete" v-if="userType===1">删除</i-button>
+        </div>
+        <div>
+            <i-input placeholder="请输入企业名称搜索" style="width: 200px;" v-model="searchText"></i-input>
+            <i-button type="primary" shape="circle" icon="ios-search" @click="search"></i-button>
+        </div>
+    </nav>
+    <!--数据区块-->
+    <i-Table border :columns="columns" :data="data1" @on-selection-change="chooseAll" ellipsis></i-Table>
+    <!--\总页数-->
+    <Page :total="totalRecord" @on-change="changePage"
+          :page-size="page.pageNum" show-total show-elevator></Page>
+    <!--弹出层-->
+    <Modal
+            width="50%"
+            v-model="modal1"
+            :closable="false"
+    >
+        <Steps :current="current" style="border-bottom: 1px dashed #e4e5e7;padding-bottom: 10px" v-if="userType===1">
+            <Step title="上传企业信息" icon="person-add"></Step>
+            <Step title="添加企业账户" icon="person-stalker"></Step>
+        </Steps>
+        <i-form ref="company" :model="company" :rules="ruleValidate" v-show="state" style="padding-top: 10px">
+            <Row>
+                <i-col span="24">
+                    <Form-Item label="企业名称" prop="name">
+                        <i-Input placeholder="请输入企业名称" v-model="company.name" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-col>
+            </Row>
+            <Row>
+                <i-col span="11">
+                    <Form-Item label="营业执照" prop="businessLicence">
+                        <i-Input placeholder="请输入营业执照" v-model="company.businessLicence" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-col>
+                <i-col span="2"></i-col>
+                <i-col span="11">
+                    <Form-Item label="营业执照有效期">
+                        <Date-Picker type="date" placeholder="选择日期" style="width: 100%"
+                                     v-model="company.businLicenceTime" v-bind:disabled="openState==='查看'"></Date-Picker>
+                    </Form-Item>
+                </i-col>
+            </Row>
+            <Row>
+                <i-col span="11">
+                    <Form-Item label="经营许可证" prop="businessCertificate">
+                        <i-Input placeholder="请输入经营许可证" v-model="company.businessCertificate" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-col>
+                <i-col span="2"></i-col>
+                <i-col span="11">
+                    <Form-Item label="经营许证可有效期">
+                        <Date-Picker type="date" placeholder="选择日期" style="width: 100%"
+                                     v-model="company.businCertificateTime" v-bind:disabled="openState==='查看'"></Date-Picker>
+                    </Form-Item>
+                </i-col>
+            </Row>
+            <Row>
+                <i-col span="11">
+                    <Form-Item label="企业联系人" prop="linkman">
+                        <i-Input placeholder="请输入企业联系人" v-model="company.linkman" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-col>
+                <i-col span="2"></i-col>
+                <i-col span="11">
+                    <Form-Item label="企业联系人电话" prop="linkPhone">
+                        <i-Input placeholder="请输入企业联系人电话" v-model="company.linkmanPhone" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-col>
+            </Row>
+            <Row>
+                <i-col span="11">
+                    <Form-Item label="企业法人代表" prop="represent">
+                        <i-Input placeholder="请输入企业法人代表" v-model="company.represent" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-col>
+                <i-col span="2"></i-col>
+                <i-col span="11">
+                    <Form-Item label="法人代表电话" prop="representPhone">
+                        <i-Input placeholder="请输入企业法人代表电话" v-model="company.representPhone" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-col>
+            </Row>
+            <Row>
+                <i-col span="24">
+                    <Form-Item label="区域">
+                        <Cascader :data="cityData" v-model="theCity" style="width: 100%" ></Cascader>
+                    </Form-Item>
+                </i-col>
+            </Row>
+            <Row>
+                <i-col span="24">
+                    <Form-Item label="范围" prop="businessScope">
+                        <i-Input v-model="company.businessScope" placeholder="请输入经营范围" type="textarea"
+                                 :rows="4" v-bind:disabled="openState==='查看'"></i-Input>
+                    </Form-Item>
+                </i-col>
+            </Row>
+        </i-form>
+        <i-Form ref="formCustom" :model="formCustom" :rules="ruleCustom" v-show="!state" style="padding-top: 10px">
+            <Row>
+                <i-col span="24">
+                    <Form-Item label="公司账户" prop="name">
+                        <i-Input type="text" v-model="formCustom.name" ></i-Input>
+                    </Form-Item>
+                </i-col>
+            </Row>
+            <Row>
+                <i-col span="24">
+                    <Form-Item label="密码" prop="password">
+                        <i-Input type="password" v-model="formCustom.password"></i-Input>
+                    </Form-Item>
+                </i-col>
+            </Row>
+            <Row>
+                <i-col span="24">
+                    <Form-Item label="确认密码" prop="passCheck">
+                        <i-Input type="password" v-model="formCustom.passCheck"></i-Input>
+                    </Form-Item>
+                </i-col>
+            </Row>
+            <Row>
+                <i-col span="24">
+                    <Form-Item>
+                        <i-Button type="primary" @click="submit('formCustom')">提交</i-Button>
+                    </Form-Item>
+                </i-col>
+            </Row>
+            
+        </i-Form>
+        <!--自定义-->
+        <div slot="footer" v-show="state">
+            <i-button type="text" style="width: 100px;" @click="cancel">取消</i-button>
+            <i-button type="primary" @click="upMessage" :loading="loading" style="width: 100px;">确定</i-button>
+        </div>
+    </Modal>
+</div>
+</body>
+<script src="../../js/jquery-2.1.0.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="../../js/vue.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="../../js/iview.js"></script>
+<script src="../../js/support/area.js"></script>
+<script src="../../config/config.js"></script>
+<script src="../../config/js.cookie.js"></script>
+<script src="../../js/view/businessInfo.js"></script>
+</html>

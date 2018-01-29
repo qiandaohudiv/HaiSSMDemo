@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>海梁</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <!-- 引入Vue -->
+    <script src="js/vue.min.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="css/iview.min.css">
+    <!-- 引入组件库 -->
+    <script src="js/iview.js"></script>
+    <style>
+        .layout {
+            /* height: 100vh; */
+            background: #f5f7f9;
+        }
+        .layout-logo {
+            width: 270px;
+            height: 45px;
+            background: #5b6270;
+            border-radius: 3px;
+            float: left;
+            position: relative;
+            top: 8px;
+            left: 20px;
+        }
+
+        .layout-assistant {
+            width: 300px;
+            margin: 0 auto;
+            height: inherit;
+        }
+
+        .layout-breadcrumb {
+            padding: 10px 15px 0;
+        }
+
+        .layout-content {
+        overflow: hidden;
+            background: #fff;
+        }
+
+
+        .layout-copy {
+            text-align: center;
+            padding: 10px 0 20px;
+            color: #9ea7b4;
+        }
+
+        .layout-ceiling-main {
+            float: right;
+            margin-right: 15px;
+        }
+
+        .layout-ceiling-main a {
+            color: #9ba7b5;
+        }
+
+        .ivu-row {
+            /* height: 85vh; */
+        }
+
+        .ivu-tabs-bar {
+            margin-bottom: 0px;
+        }
+
+        .demo-spin-icon-load{
+            animation: ani-demo-spin 1s linear infinite;
+        }
+        @keyframes ani-demo-spin {
+            from { transform: rotate(0deg);}
+            50%  { transform: rotate(180deg);}
+            to   { transform: rotate(360deg);}
+        }
+        .layout-logo-left{
+            width: 90%;
+            height: 30px;
+            background: #5b6270;
+            border-radius: 3px;
+            margin: 15px auto;
+        }
+
+    </style>
+</head>
+<body>
+<div id="app" ref="head" style="display: none">
+    <Row type="flex" justify="center" align="middle" style="height:100vh" v-show="spinShow">
+        <Spin >
+            <Icon type="load-a" size=50 class="demo-spin-icon-load"></Icon>
+            <div style="font-size: 20px;">Loading</div>
+        </Spin>
+    </Row>
+
+    <div class="layout" v-show="!spinShow">
+        <div class="layout-content" >
+            <i-Menu mode="horizontal" theme="dark" active-name="1" >
+                <div class="layout-logo" style="background-image: url('img/logo_left .png')"></div>
+                <div class="layout-ceiling-main">
+                    <a href="#">管理员</a> |
+                    <a href="#">修改密码</a> |
+                    <a href="#">返回首页</a> |
+                    <a href="#" @click="exit">退出</a>
+                </div>
+            </i-Menu>
+            <Row>
+                <i-Col span="4" >
+                    <i-Menu width="auto" style=" height:100vh;" @on-select="route" accordion theme="light">
+                        <Menu-Item name="view/home-page/home.html" style="text-align: center;font-size: 21px;font-weight: bold;border-bottom: 1px dashed #cfcfcf">首页</Menu-Item>
+                        <Submenu name="1" v-if="userType===1||userType===2">
+                            <template slot="title">
+                                <Icon type="ios-analytics"></Icon>
+                                基础数据
+                            </template>
+                            <Menu-Item name="view/base-data/goods-type.html">货物类型信息</Menu-Item>
+                            <Menu-Item name="view/base-data/safe-card.html">安全卡信息</Menu-Item>
+                        </Submenu>
+                        <Submenu name="2">
+                            <template slot="title">
+                                <Icon type="ios-analytics"></Icon>
+                                企业管理
+                            </template>
+                            <Menu-Item name="view/enterprise-manage/carrier-businessInfo.html" v-if="userType===1||userType===2">承运企业信息</Menu-Item>
+                            <Menu-Item name="view/enterprise-manage/personInfo.html">人员信息</Menu-Item>
+                            <Menu-Item name="view/enterprise-manage/carInfo.html">车辆信息</Menu-Item>
+                        </Submenu>
+                        <Submenu name="4" v-if="userType===1||userType===2">
+                            <template slot="title">
+                                <Icon type="ios-analytics"></Icon>
+                                货物管理
+                            </template>
+                            <Menu-Item name="view/goods-manage/goodsInfo.html">货物信息</Menu-Item>
+                        </Submenu>
+                        <Submenu name="5">
+                            <template slot="title">
+                                <Icon type="ios-analytics"></Icon>
+                                托运管理
+                            </template>
+                            <Menu-Item name="view/consign-manage/electronic-waybillInfo.html">电子运单信息</Menu-Item>
+                        </Submenu>
+                        <Submenu name="6">
+                            <template slot="title">
+                                <Icon type="ios-analytics"></Icon>
+                                动态监控
+                            </template>
+                            <Menu-Item name="view/dynamic-monitoring/GPS-violation.html">GPS违章</Menu-Item>
+                        </Submenu>
+                        <Submenu name="7">
+                            <template slot="title">
+                                <Icon type="ios-analytics"></Icon>
+                                报警中心
+                            </template>
+                            <Menu-Item name="view/alarm-center/alarmCenter.html">报警记录</Menu-Item>
+                        </Submenu>
+                        <!--<Submenu name="8">-->
+                            <!--<template slot="title">-->
+                                <!--<Icon type="ios-analytics"></Icon>-->
+                                <!--应急救援-->
+                            <!--</template>-->
+                            <!--<Menu-Item name="应急救援/应急管理">应急管理</Menu-Item>-->
+                        <!--</Submenu>-->
+                        <Submenu name="9">
+                            <template slot="title">
+                                <Icon type="ios-analytics"></Icon>
+                                培训中心
+                            </template>
+                            <Menu-Item name="view/train-center/trainEdit.html" v-if="userType===1||userType===2">培训编辑</Menu-Item>
+                            <Menu-Item name="view/train-center/trainLog.html">培训状态</Menu-Item>
+                        </Submenu>
+                    </i-Menu>
+                </i-Col>
+                <i-Col span="20" >
+
+                    <div class="layout-content-main" >
+                        <iframe id="main" :src="content" align="right" frameborder="0" width="100%"
+                                style="border-top: 1px solid #ddd;height: 1000px;">
+                            <p>您的浏览器不支持 iframe 标签。</p>
+                        </iframe>
+                        <div class="layout-copy" style="line-height: 3">
+                            2016-2017 &copy; Zhejiang HaiLiang Technology Co., Ltd.
+                        </div>
+                    </div>
+
+                </i-Col>
+            </Row>
+        </div>
+
+    </div>
+</div>
+<script src="config/config.js"></script>
+<script src="config/js.cookie.js"></script>
+<script src="js/jquery-2.1.0.min.js"></script>
+<script>
+    new Vue({
+        el: "#app",
+        data:function() {
+            return {
+                userType:'',
+                spinShow:true,
+                content:"view/home-page/home.html"
+            }
+        },
+        mounted: function () {
+            this.$refs.head.style.display = 'block';
+        },
+        methods: {
+            route:function(name) {
+                this.content=name+'?time='+Date.parse(new Date());
+            },
+            exit:function(){
+                $.get(dataUrl.login.logout,function(data){});
+                var state={
+                    ID:0
+                };
+                Cookies.set("state",state);
+                window.location.href="login.html";
+            }
+        },
+        created:function(){
+            var _self=this;
+            if(typeof Cookies.get("state")!='undefined'){
+            	var textState=JSON.parse(Cookies.get("state"));
+                if(textState.ID==0){
+                    window.location.href="login.html";
+                }else if(textState.ID==1){
+                    _self.spinShow=false;
+                    if(textState.roleID==1){
+                        console.log("haiAdmin");
+                        _self.userType=1;
+                    }else if(textState.roleID==2){
+                        console.log("yuAdmin");
+                        _self.userType=2;
+                    }else {
+                        console.log("company");
+                        _self.userType=3;
+                    }
+                }
+            }
+            else {
+            	window.location.href="login.html";
+            }
+        }
+    });
+</script>
+</body>
+</html>

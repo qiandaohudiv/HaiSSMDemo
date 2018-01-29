@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>海梁</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <script src="js/vue.min.js"></script>
+    <link rel="stylesheet" href="css/iview.min.css">
+    <script src="js/iview.js"></script>
+</head>
+
+<body>
+
+<div id="app" style="display: none">
+    <div style="background:#73777a;height: 38vh"></div>
+    <div style="background:#eee;height: 62vh;">
+        <Row type="flex" justify="center" align="middle"
+             style="position: absolute;top: -60px;left: 0;right: 0;bottom: 0;margin: auto">
+            <i-Col>
+                <Card :bordered="false" style="width: 400px;">
+                    <p slot="title">海梁</p>
+                    <i-Form ref="formInline" :model="formInline" :rules="ruleInline">
+                        <Form-Item prop="name">
+                            <i-Input type="text" v-model="formInline.name" placeholder="用户名" size="large">
+                                <!--<Icon type="ios-person" slot="prepend"></Icon>-->
+                            </i-Input>
+                        </Form-Item>
+                        <Form-Item prop="pass">
+                            <i-Input type="password" v-model="formInline.pass" placeholder="密码" size="large">
+                                <!--<Icon type="ios-locked" slot="prepend"></Icon>-->
+                            </i-Input>
+                        </Form-Item>
+                        <Form-Item>
+                            <row :gutter="16">
+                                <i-col span="14">
+                                    <i-Input 
+                                    v-model="inputCode" 
+                                    placeholder="验证码"
+                                    @on-enter="login" 
+                                    size="large">
+                                    </i-Input>
+                                </i-col>
+                                <i-col span="10">
+                                    <div @click="newCode"
+                                         style="border: 1px solid #EEEEEE;text-align: center;font-size: 26px;cursor: pointer;">
+                                        {{code}}
+                                    </div>
+                                </i-col>
+
+                            </row>
+
+                        </Form-Item>
+                        <Form-Item>
+                            <i-Button type="info" 
+                            style="width: 100%;" 
+                            @click="login" 
+                            size="large" 
+                            :loading="isLogin"
+                            
+                            >登录</i-Button>
+                        </Form-Item>
+                    </i-Form>
+
+                </Card>
+            </i-Col>
+        </Row>
+    </div>
+</div>
+</body>
+<script src="js/jquery-2.1.0.min.js"></script>
+<script src="config/config.js"></script>
+<script src="config/js.cookie.js"></script>
+<script type="text/javascript">
+    var DEFAULT_VERSION = "9.0";
+    var ua = navigator.userAgent.toLowerCase();
+    var isIE = ua.indexOf("msie") > -1;
+    var safariVersion;
+    var app = document.getElementById("app");
+    if (isIE) {
+        safariVersion = ua.match(/msie ([\d.]+)/)[1];
+        if (safariVersion <= DEFAULT_VERSION) {
+            window.location.href = "version.html";
+        } else {
+            app.style.display = "block";
+        }
+    } else {
+        app.style.display = "block";
+    }
+
+    new Vue({
+        el: "#app",
+        data: {
+            model1: '',
+            code: '',
+            inputCode: '',
+            formInline: {
+                name: '',
+                pass: ''
+            },
+            isLogin:false,
+            ruleInline: {
+                name: [{
+                    required: true,
+                    message: '请填写用户名',
+                    trigger: 'blur'
+                }],
+                pass: [{
+                    required: true,
+                    message: '请填写密码',
+                    trigger: 'blur'
+                },
+                    {
+                        type: 'string',
+                        min: 6,
+                        message: '密码长度不能小于6位',
+                        trigger: 'blur'
+                    }
+                ]
+            }
+        },
+        methods: {
+            newCode:function() {
+                var arr = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+                this.code = '';
+                for (var i = 0; i < 4; i++)
+                    this.code += '' + arr[Math.floor(Math.random() * arr.length)];
+            },
+            getCompanyName:function (state,companyId) {
+                var _self=this;
+                $.get(dataUrl.company.getName+companyId,function (obj,status) {
+                    if(status==='success'){
+                        state.companyName=obj.name;
+                        Cookies.set("state",state);
+                        if(JSON.parse(Cookies.get("state")).companyID!=null){
+                            _self.$Message.success('登录成功！');
+                            window.location.href = 'index.html';
+                        }
+                    }else
+                        _self.$Message.success('登录失败！');
+                });
+            },
+            login:function() {
+                var _self=this;
+                var state={};
+                
+                if (_self.code == _self.inputCode) {
+                	_self.isLogin=true;
+                    $.get(dataUrl.login.login,_self.formInline,function(data,status){
+                    	_self.isLogin=false;
+                        if(status==='success'){
+                            for(var i in data){
+                                if(i==3){
+                                    _self.$Message.error('账号密码错误！');
+                                }else{
+                                    state.ID=1;
+                                    state.roleID=data[i].roleId;
+                                    state.companyID=data[i].companyId;
+                                    if(state.companyID!=null){
+                                        _self.getCompanyName(state,data[i].companyId);
+                                    }else {
+                                    	Cookies.set("state",state);
+                                        if(JSON.parse(Cookies.get("state")).roleID!=null){
+                                            _self.$Message.success('登录成功！');
+                                            window.location.href = 'index.html';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        	{
+                        	_self.isLogin = false;
+                        	_self.$Message.success('登录失败！');                        	
+                        	}                          
+                    });
+                }else {
+                    this.$Message.error('验证码错误！');
+                }
+            }
+        },
+        created:function() {
+            if(typeof Cookies.get("state")!='undefined'){
+                var textState = JSON.parse(Cookies.get("state"));
+                if (textState.ID == 1) {
+                    window.location.href = "index.html";
+                }
+            }
+
+            this.newCode();
+        }
+    });
+</script>
+
+</html>
