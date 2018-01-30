@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Built-By: fuyan
-Build-Jdk: 1.8.0_102
+Build-Jdk: 1.7.0_60
+Built-By: jkw
 Created-By: Maven Integration for Eclipse
 
